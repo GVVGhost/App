@@ -1,29 +1,35 @@
 package gvvghost.javaapp;
+import java.awt.*;
 import java.io.*;
 import java.net.*;
+import org.jfree.ui.RefineryUtilities;
 
 public class Server extends Thread
 {
-    public Server() {}
+    Server() {}
 
-    public void runServer()
+    void runServer()
     {
+        appWindow = new AppWindow();
+        appWindow.pack();
+        appWindow.setMinimumSize(new Dimension(600, 550));
+        RefineryUtilities.centerFrameOnScreen(appWindow);
+        appWindow.setVisible(true);
         ServerSocket sSocket = null;
+
         try
         {
             try
             {
                 int i = 0;
-                InetAddress ia = InetAddress.getByName("localhost");
+                InetAddress ia = InetAddress.getByName(ipA);
                 System.out.println();
                 sSocket = new ServerSocket(port , 0, ia);
-
-                System.out.println("Server started\n\n");
-
+                appWindow.setToTextArea("Server started");
                 while(true)
                 {
                     Socket socket = sSocket.accept();
-                    System.out.println("Client accepted");
+                    appWindow.addStringToTextArea("\nClient accepted");
                     new Server().setSocket(i++, socket);
                 }
             }
@@ -70,15 +76,17 @@ public class Server extends Thread
             while(true)
             {
                 line = dis.readUTF();
-                System.out.println(String.format(TEMPL_MSG, num) + line);
-                System.out.println("I'm sending it back...");
+                appWindow.newIncomingData(line);
+                appWindow.addStringToTextArea("The client sent me messege:\n\t"
+                        + line + "\nI'm sending it back...");
+
                 dos.writeUTF("Server recive text : " + line);
                 dos.flush();
-                System.out.println();
+
                 if (line.equalsIgnoreCase("quit"))
                 {
                     socket.close();
-                    System.out.println(String.format(TEMPL_CONN, num));
+                    appWindow.addStringToTextArea(String.format(TEMPL_CONN, num).toString());
                     break;
                 }
             }
@@ -89,9 +97,12 @@ public class Server extends Thread
         }
     }
 
+
+    private static AppWindow appWindow;
     private static final int port = 4321;
+    private static final String ipA = "127.0.0.1";
     private String TEMPL_MSG = "The client '%d' sent me messege : \n\t";
-    private String TEMPL_CONN = "The client '%d' close the connection";
+    private String TEMPL_CONN = "The client '%d' close the connection\n";
     private Socket socket;
     private int    num;
 }
